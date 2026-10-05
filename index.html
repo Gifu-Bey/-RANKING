@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ちょこベイ ランキング</title>
+    <style>
+        :root {
+            --bg-color: #0f111a;
+            --card-bg: #1a1d29;
+            --accent-color: #00d2ff;
+            --accent-gradient: linear-gradient(135deg, #00d2ff 0%, #3a7bd5 100%);
+            --text-color: #ffffff;
+            --text-sub: #a0aec0;
+            --gold: #ffd700;
+            --silver: #c0c0c0;
+            --bronze: #cd7f32;
+        }
+
+        body {
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 15px;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        header {
+            margin-bottom: 20px;
+        }
+
+        .header-top {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 10px;
+        }
+
+        header h1 {
+            font-size: 1.3rem;
+            margin: 0;
+            background: var(--accent-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        header p {
+            color: var(--text-sub);
+            font-size: 0.75rem;
+            margin: 3px 0 0;
+        }
+
+        /* ドロップダウンメニュー（シーズン選択用） */
+        .dropdown-container {
+            position: relative;
+            flex-shrink: 0;
+        }
+
+        .season-dropdown-btn {
+            background: rgba(26, 29, 41, 0.9);
+            border: 1px solid rgba(0, 210, 255, 0.4);
+            color: #fff;
+            padding: 6px 12px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            cursor: pointer;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+            transition: all 0.3s ease;
+        }
+
+        .season-dropdown-btn::after {
+            content: "▼";
+            font-size: 0.6rem;
+            color: var(--accent-color);
+        }
+
+        .season-dropdown-content {
+            display: none;
+            position: absolute;
+            right: 0;
+            top: 100%;
+            margin-top: 5px;
+            background: var(--card-bg);
+            min-width: 110px;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.4);
+            border-radius: 8px;
+            border: 1px solid rgba(0, 210, 255, 0.2);
+            z-index: 10;
+            overflow: hidden;
+        }
+
+        .season-dropdown-content.show {
+            display: block;
+        }
+
+        .season-option {
+            color: var(--text-color);
+            padding: 10px 14px;
+            text-decoration: none;
+            display: block;
+            font-size: 0.8rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.2s;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .season-option:last-child {
+            border-bottom: none;
+        }
+
+        .season-option:hover {
+            background: rgba(0, 210, 255, 0.15);
+            color: var(--accent-color);
+        }
+
+        .season-option.active {
+            color: var(--accent-color);
+            background: rgba(0, 210, 255, 0.1);
+        }
+
+        /* カテゴリ（総合・3on3・1on1）タブメニュー */
+        .tab-menu {
+            display: flex;
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 4px;
+            margin-bottom: 15px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+        }
+
+        .tab-btn {
+            flex: 1;
+            background: none;
+            border: none;
+            color: var(--text-sub);
+            padding: 8px;
+            font-size: 0.85rem;
+            font-weight: bold;
+            cursor: pointer;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .tab-btn.active {
+            background: var(--accent-gradient);
+            color: #fff;
+            box-shadow: 0 2px 4px rgba(0,210,255,0.4);
+        }
+
+        /* ランキングカード */
+        .ranking-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .ranking-card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 12px 15px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+            border-left: 4px solid transparent;
+        }
+
+        .rank-1 { border-left-color: var(--gold); }
+        .rank-2 { border-left-color: var(--silver); }
+        .rank-3 { border-left-color: var(--bronze); }
+
+        .player-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            min-width: 0;
+            flex: 1;
+            margin-right: 12px;
+        }
+
+        .rank-number {
+            font-size: 1.1rem;
+            font-weight: bold;
+            width: 24px;
+            text-align: center;
+            color: var(--text-sub);
+            flex-shrink: 0;
+        }
+
+        .rank-1 .rank-number { color: var(--gold); }
+        .rank-2 .rank-number { color: var(--silver); }
+        .rank-3 .rank-number { color: var(--bronze); }
+
+        .player-icon {
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            object-fit: cover;
+            background-color: #2d3748;
+            border: 2px solid var(--accent-color);
+            flex-shrink: 0;
+        }
+
+        .player-icon-default {
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            background: var(--accent-gradient);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 0.9rem;
+            color: #fff;
+            flex-shrink: 0;
+        }
+
+        .player-name {
+            font-size: 0.95rem;
+            font-weight: bold;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .player-stats {
+            text-align: right;
+            flex-shrink: 0;
+        }
+
+        .points {
+            font-size: 1.1rem;
+            font-weight: bold;
+            color: var(--accent-color);
+        }
+
+        .sub-stats {
+            font-size: 0.7rem;
+            color: var(--text-sub);
+            margin-top: 2px;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .loading, .error-msg {
+            text-align: center;
+            color: var(--text-sub);
+            padding: 30px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <header>
+            <div class="header-top">
+                <div>
+                    <h1>ちょこベイ ランキング</h1>
+                    <p>ベイブレードX 戦績・ポイントランキング</p>
+                </div>
+                <!-- シーズン選択用ドロップダウン -->
+                <div class="dropdown-container">
+                    <button class="season-dropdown-btn" id="currentSeasonLabel" onclick="toggleDropdown(event)">年間</button>
+                    <div class="season-dropdown-content" id="seasonDropdownMenu">
+                        <div class="season-option active" onclick="selectSeason('年間', '年間', event)">年間</div>
+                        <div class="season-option" onclick="selectSeason('season1', 'season1', event)">season1</div>
+                        <div class="season-option" onclick="selectSeason('season2', 'season2', event)">season2</div>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- カテゴリ切り替えボタン -->
+        <div class="tab-menu">
+            <button class="tab-btn active" onclick="switchTab('overall', event)">総合</button>
+            <button class="tab-btn" onclick="switchTab('match3on3', event)">3on3</button>
+            <button class="tab-btn" onclick="switchTab('single', event)">1on1</button>
+        </div>
+
+        <!-- 総合ランキング -->
+        <div id="overall" class="tab-content active">
+            <div class="ranking-list" id="list-overall">
+                <div class="loading">スプレッドシートからデータを読み込み中...</div>
+            </div>
+        </div>
+
+        <!-- 3on3ランキング -->
+        <div id="match3on3" class="tab-content">
+            <div class="ranking-list" id="list-match3on3">
+                <div class="loading">読み込み中...</div>
+            </div>
+        </div>
+
+        <!-- 1on1ランキング -->
+        <div id="single" class="tab-content">
+            <div class="ranking-list" id="list-single">
+                <div class="loading">読み込み中...</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const SHEET_ID = '1-N3nf2jO0LJ5LksA7OgIm1DmA8cAhCAa21CtAs5_MGg';
+        
+        let currentSheetName = '年間';
+        let globalPlayersData = [];
+        let currentActiveTab = 'overall';
+
+        // ドロップダウンの開閉
+        function toggleDropdown(event) {
+            event.stopPropagation();
+            document.getElementById('seasonDropdownMenu').classList.toggle('show');
+        }
+
+        window.onclick = function(event) {
+            if (!event.target.matches('.season-dropdown-btn')) {
+                const dropdowns = document.getElementsByClassName('season-dropdown-content');
+                for (let i = 0; i < dropdowns.length; i++) {
+                    let openDropdown = dropdowns[i];
+                    if (openDropdown.classList.contains('show')) {
+                        openDropdown.classList.remove('show');
+                    }
+                }
+            }
+        }
+
+        function selectSeason(sheetName, labelText, event) {
+            document.querySelectorAll('.season-option').forEach(opt => opt.classList.remove('active'));
+            event.currentTarget.classList.add('active');
+
+            document.getElementById('currentSeasonLabel').innerText = labelText;
+            document.getElementById('seasonDropdownMenu').classList.remove('show');
+
+            currentSheetName = sheetName;
+            fetchSheetData();
+        }
+
+        function switchTab(tabId, event) {
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+
+            event.currentTarget.classList.add('active');
+            document.getElementById(tabId).classList.add('active');
+            
+            currentActiveTab = tabId;
+            renderAllRankings();
+        }
+
+        function convertDriveUrl(url) {
+            if (!url) return '';
+            const match = url.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
+            if (match && match[1]) {
+                return `https://lh3.googleusercontent.com/d/${match[1]}`;
+            }
+            const matchQuery = url.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+            if (matchQuery && matchQuery[1]) {
+                return `https://lh3.googleusercontent.com/d/${matchQuery[1]}`;
+            }
+            return url;
+        }
+
+        function parseCSV(text) {
+            let lines = text.split('\n');
+            let result = [];
+            for (let i = 1; i < lines.length; i++) {
+                if (!lines[i].trim()) continue;
+                let row = [];
+                let entry = '';
+                let inQuotes = false;
